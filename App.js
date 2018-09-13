@@ -13,9 +13,11 @@ import {Platform, StyleSheet, Text, View, ToolbarAndroid} from 'react-native';
 
 import NotificationService from './lib/notifications';
 
-import MultiItemList from './lib/flat-list'
+import MultiItemList, { MyListItem } from './lib/flat-list'
 import TopAppBar from '@material/react-top-app-bar';
 import MaterialIcon from '@material/react-material-icon';
+
+import getNotifications from './lib/data'
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
@@ -31,23 +33,84 @@ export default class App extends Component<Props> {
   constructor(props) {
     super(props);
     this.notify = new NotificationService(this.onRegister.bind(this), this.onNotif.bind(this));
+    this.viewedNotifications = []
+    this.state = {
+      newNotifications: [],
+      dismissedNotifications: []
+    }
+  }
+
+  doTheData() {
+    getNotifications().then((res) => {
+      // alert(JSON.stringify(res))
+      const theItems = [...res]
+      let newAlerts = res.filter((item) => {
+        return !item.dismissed
+      })
+
+      let dismissedAlerts = res.filter((item) => {
+        return item.dismissed
+      })
+      // alert(JSON.stringify(theItems))
+      newAlerts.map((item) => {
+        var found = false
+        
+        this.viewedNotifications.map((oItem) => {
+          if (oItem.id === item.id) {
+            found = true
+          } else {
+            
+          }
+        })
+
+        if (found) {
+
+        } else {
+            this.notify.localNotif(item)
+            // NOTIFY HERE
+            this.viewedNotifications.push(item)
+        }
+      })
+
+      this.setState({
+        newNotifications: newAlerts,
+        dismissedNotifications: dismissedAlerts
+      })
+    }).catch(err => {
+      // alert(err)
+    })
+  }
+
+  componentDidMount() {
+    setInterval(() => {
+      this.doTheData()
+    }, 1500)
+    this.doTheData()
   }
 
   render() {
     return (
       
       <View style={styles.container}>
-      <ToolbarAndroid
-      title="AwesomeApp" 
-      navIcon={require('./icons/x.png')}
-      actions={[{title: 'Settings', show: 'always'}]}
-      style={styles.toolbar}
-      />
-      <MultiItemList data={[{id: 'a1', title: "test", handler: () => {alert("YO")}}, {id: 'a2', title: "Toast", handler: () => {this.notify.localNotif()}}]}
-      />
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
+        <ToolbarAndroid
+        title="Woooooo" 
+        navIcon={require('./icons/menu.png')}
+        actions={[{title: 'Settings', show: 'always'}]}
+        style={styles.toolbar}
+        />
+
+        <View style={styles.body}>
+          {/* <MyListItem
+            data={{}}
+            id={'empty'}
+            onPressItem={() => {}}
+            selected={false}
+            title={''}
+            style={styles.item}
+          /> */}
+          <MultiItemList data={this.state.newNotifications} />
+        </View>
+
       </View>
     );
   }
@@ -59,15 +122,13 @@ export default class App extends Component<Props> {
   }
 
   onNotif(notif) {
-    console.log(notif);
-    Alert.alert(notif.title, notif.message);
   }
 }
 
 const styles = StyleSheet.create({
   toolbar: {
-    height: 40,
-    backgroundColor: '#cf0'
+    height: 56,
+    backgroundColor: '#f4df42'
   },
   container: {
     // height: 10,
@@ -77,6 +138,12 @@ const styles = StyleSheet.create({
     // alignItems: 'center',
     backgroundColor: '#000',
     color: '#333333'
+  },
+  item: {
+
+  },
+  body: {
+    flex: 1
   },
   welcome: {
     fontSize: 20,
